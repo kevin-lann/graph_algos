@@ -10,6 +10,8 @@
 #include "graph.h"
 #include "minheap.h"
 
+MinHeap* initHeap(Graph* graph, int startVertex);
+
 /*
  * A structure to keep record of the current running algorithm.
  */
@@ -35,7 +37,22 @@ typedef struct records
  * 'startVertex'.
  * Precondition: 'startVertex' is valid in 'graph'
  */
-Records* initRecords(Graph* graph, int startVertex);
+Records* initRecords(Graph* graph, int startVertex)
+{
+  Records *records = (Records *) malloc (sizeof (Records));
+
+  records->numVertices = graph->numVertices;
+  records->heap = initHeap(graph, startVertex);
+
+  // allocates and initializes all entries to false.
+  records->finished = (bool *) calloc (graph->numVertices, sizeof (bool));
+
+  records->predecessors = (int *) malloc (graph->numVertices * sizeof (int));
+  records->tree = (Edge *) malloc (graph->numVertices * sizeof (Edge));
+  records->numTreeEdges = 0;
+
+  return records;
+}
 
 /*
  * Creates, populates, and returns a MinHeap to be used by Prim's and
@@ -43,7 +60,18 @@ Records* initRecords(Graph* graph, int startVertex);
  * 'startVertex'.
  * Precondition: 'startVertex' is valid in 'graph'
  */
-MinHeap* initHeap(Graph* graph, int startVertex);
+MinHeap* initHeap(Graph* graph, int startVertex)
+{
+  MinHeap *min_heap = newHeap (graph->numVertices);
+
+  insert (min_heap, 0, startVertex);
+
+  for (int i = 0; i < graph->numVertices; i++)
+    if (graph->vertices[i]->id != startVertex)
+      insert (min_heap, INT_MAX, i);
+  
+  return min_heap; 
+}
 
 /*
  * Returns true iff 'heap' is NULL or is empty.
