@@ -67,35 +67,63 @@ void printGraph(Graph* graph)
 
 Edge* newEdge(int fromVertex, int toVertex, int weight)
 {
-  return NULL;
+  Edge *edge = (Edge *) malloc (sizeof (Edge));
+  edge->fromVertex = fromVertex;
+  edge->toVertex = toVertex;
+  edge->weight = weight;
+  return edge;
 }
 
 EdgeList* newEdgeList(Edge* edge, EdgeList* next)
 {
-  return NULL;
+  EdgeList *list = (EdgeList *) malloc (sizeof (EdgeList));
+  list->edge = edge;
+  list->next = next;
+  return list;
 }
 
 Vertex* newVertex(int id, void* value, EdgeList* adjList)
 {
-  return NULL;
+  Vertex *vertex = (Vertex *) malloc (sizeof (Vertex));
+  vertex->id = id;
+  vertex->value = value;
+  vertex->adjList = adjList;
+  return vertex;
 }
 
 Graph* newGraph(int numVertices)
 {
-  return NULL;
+  Graph *graph = (Graph *) malloc (sizeof (Graph));
+  graph->numVertices = numVertices;
+  graph->numEdges = 0;
+  graph->vertices = (Vertex **) malloc (numVertices * sizeof (Vertex *));
+  return graph;
 }
 
 void deleteEdgeList(EdgeList* head)
 {
-  return;
+  EdgeList *nxt = NULL;
+  while (head)
+  {
+    nxt = head->next;
+    free (head->edge);
+    free (head);
+    head = nxt;
+  }
 }
 
 void deleteVertex(Vertex* vertex)
 {
-  return;
+  deleteEdgeList (vertex->adjList);
+  free (vertex);
 }
 
 void deleteGraph(Graph* graph)
 {
-  return;
+  for (int i = 0; i < graph->numVertices; i++)
+  {
+    deleteVertex (graph->vertices[i]);
+    free (graph->vertices);
+  }
+  free (graph);
 }
