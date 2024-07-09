@@ -76,7 +76,10 @@ MinHeap* initHeap(Graph* graph, int startVertex)
 /*
  * Returns true iff 'heap' is NULL or is empty.
  */
-bool isEmpty(MinHeap* heap);
+bool isEmpty(MinHeap* heap)
+{
+  return heap == NULL || heap->size == 0;
+}
 
 /*
  * Prints the status of all current algorithm data: good for debugging.
