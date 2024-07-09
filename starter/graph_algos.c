@@ -66,9 +66,9 @@ MinHeap* initHeap(Graph* graph, int startVertex)
 
   insert (min_heap, 0, startVertex);
 
-  for (int i = 0; i < graph->numVertices; i++)
-    if (graph->vertices[i]->id != startVertex)
-      insert (min_heap, INT_MAX, i);
+  for (int id = 0; id < graph->numVertices; id++)
+    if (id != startVertex)
+      insert (min_heap, INT_MAX, id);
   
   return min_heap; 
 }
@@ -90,7 +90,13 @@ void printRecords(Records* records);
  * Add a new edge to records at index ind.
  */
 void addTreeEdge(Records* records, int ind, int fromVertex, int toVertex,
-                 int weight);
+                 int weight)
+{
+  Edge *edge = newEdge (fromVertex, toVertex, weight);
+
+  records->tree[ind] = *edge;
+  records->numTreeEdges++;
+}
 
 /*
  * Creates and returns a path from 'vertex' to 'startVertex' from edges
@@ -98,13 +104,48 @@ void addTreeEdge(Records* records, int ind, int fromVertex, int toVertex,
  */
 EdgeList* makePath(Edge* distTree, int vertex, int startVertex);
 
+/* Returns true iff id is a valid id in the graph 'graph'. */
+bool isValidNode(Graph* graph, int id)
+{
+  return 0 <= id && id < graph->numVertices;
+}
+
 /*************************************************************************
  ** Required functions
  *************************************************************************/
 
 Edge* getMSTprim(Graph* graph, int startVertex)
 {
- return NULL;
+  if (!isValidNode (graph, startVertex))
+    return NULL;
+
+  Records* rec = initRecords(graph, startVertex);
+
+  while (!isEmpty (rec->heap))
+  {
+    HeapNode u = extractMin (rec->heap);
+    rec->finished[u.id] = true;
+
+    /* Omit adding the start node, because it doesn't have a predecessor. */
+    if (u.id != startVertex)
+      addTreeEdge (rec, rec->numTreeEdges, rec->predecessors[u.id], u.id, u.priority);
+
+    /* Iterate through v's adjacency list. */
+    EdgeList* l = graph->vertices[u.id]->adjList;
+    while (l != NULL)
+    {
+      Vertex* v = graph->vertices[l->edge->toVertex];
+      /* If v in heap and w(u, v) less than priority(v) . */
+      if (rec->finished[v->id] == false && l->edge->weight < getPriority(rec->heap, v->id));
+      {
+        decreasePriority(rec->heap, v->id, l->edge->weight);
+        rec->predecessors[v->id] = u.id; 
+      }
+      l = l->next;
+    }
+  }
+
+ return rec->tree;
 }
 
 Edge* getDistanceTreeDijkstra(Graph* graph, int startVertex)
