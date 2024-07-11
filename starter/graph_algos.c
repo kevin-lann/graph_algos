@@ -104,7 +104,35 @@ void addTreeEdge(Records* records, int ind, int fromVertex, int toVertex,
  * Creates and returns a path from 'vertex' to 'startVertex' from edges
  * in the distance tree 'distTree'.
  */
-EdgeList* makePath(Edge* distTree, int vertex, int startVertex);
+EdgeList* makePath(Edge* distTree, int vertex, int startVertex)
+{
+  Edge *edge = &distTree[vertex];
+  Edge* tmp;
+  EdgeList *list, *start, *prev;
+  prev = newEdgeList (NULL, NULL);
+
+  /* Add the path to list. Path is unique and terminates at startVertex. */
+  while (edge->fromVertex != startVertex)
+  {
+    tmp = newEdge (edge->fromVertex, edge->toVertex, edge->weight);
+    list = newEdgeList (tmp, NULL);
+    prev->next = list;
+
+    if (prev->edge)
+      prev->edge->weight -= edge->weight;
+    
+    /* Record start node of list. */
+    if (edge->fromVertex == vertex)
+      start = prev->next;
+
+    list = list->next;
+    prev = prev->next;
+
+    edge = &distTree[edge->toVertex];
+  }
+
+  return start;
+}
 
 /* Returns true iff id is a valid id in the graph 'graph'. */
 bool isValidNode(Graph* graph, int id)
@@ -202,28 +230,7 @@ EdgeList** getShortestPaths(Edge* distTree, int numVertices, int startVertex)
     if (id == startVertex)
       continue;
 
-    Edge *edge = &distTree[id];
-    EdgeList *list, *start, *prev;
-    prev = newEdgeList (NULL, NULL);
-
-    /* Add the path to list. Path is unique and terminates at startVertex. */
-    while (edge->fromVertex != startVertex)
-    {
-      list = newEdgeList (&distTree[edge->fromVertex], NULL);
-      prev->next = list;
-      
-      /* Record start node of list. */
-      if (edge->fromVertex == id)
-        start = prev->next;
-
-      list = list->next;
-      prev = prev->next;
-
-      edge = &distTree[edge->toVertex];
-    }
-
-    paths[id] = start;
-    free (prev);
+    paths[id] = makePath (distTree, id, startVertex);
   }
 
   return paths;
