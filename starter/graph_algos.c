@@ -223,6 +223,7 @@ EdgeList** getShortestPaths(Edge* distTree, int numVertices, int startVertex)
     }
 
     paths[id] = start;
+    free (prev);
   }
 
   return paths;
