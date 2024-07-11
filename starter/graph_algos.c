@@ -6,6 +6,7 @@
  */
 
 #include <limits.h>
+#include <string.h>
 
 #include "graph.h"
 #include "minheap.h"
@@ -75,6 +76,25 @@ MinHeap* initHeap(Graph* graph, int startVertex)
   return min_heap; 
 }
 
+/* Allocates and populates  an array of edges of 'size' length with the
+contents of edge array 'arr_' . */
+Edge* newEdgeArr(int size, Edge* arr_)
+{
+  Edge *arr = (Edge *) malloc (size * sizeof (Edge));
+  memcpy (arr, arr_, size * sizeof (Edge));
+}
+
+/* Frees entire record structure given by 'rec' except the tree field. */
+void deleteRecords(Records *rec)
+{
+  deleteHeap (rec->heap);
+  free (rec->finished);
+  free (rec->predecessors);
+  free (rec->distances);
+  free (rec->tree);
+  free(rec);
+}
+
 /*
  * Returns true iff 'heap' is NULL or is empty.
  */
@@ -94,9 +114,8 @@ void printRecords(Records* records);
 void addTreeEdge(Records* records, int ind, int fromVertex, int toVertex,
                  int weight)
 {
-  Edge *edge = newEdge (fromVertex, toVertex, weight);
-
-  records->tree[ind] = *edge;
+  Edge edge = {fromVertex, toVertex, weight};
+  records->tree[ind] = edge;
   records->numTreeEdges++;
 }
 
@@ -149,7 +168,7 @@ Edge* getMSTprim(Graph* graph, int startVertex)
   if (!isValidNode (graph, startVertex))
     return NULL;
 
-  Records* rec = initRecords(graph, startVertex);
+  Records *rec = initRecords(graph, startVertex);
 
   while (!isEmpty (rec->heap))
   {
@@ -164,9 +183,10 @@ Edge* getMSTprim(Graph* graph, int startVertex)
     EdgeList* l = graph->vertices[u.id]->adjList;
     while (l != NULL)
     {
-      Vertex* v = graph->vertices[l->edge->toVertex];
+      Vertex *v = graph->vertices[l->edge->toVertex];
       /* If v in heap and w(u, v) less than priority(v) . */
-      if (rec->finished[v->id] == false && l->edge->weight < getPriority (rec->heap, v->id))
+      if (rec->finished[v->id] == false && 
+          l->edge->weight < getPriority (rec->heap, v->id))
       {
         decreasePriority(rec->heap, v->id, l->edge->weight);
         rec->predecessors[v->id] = u.id; 
@@ -174,8 +194,11 @@ Edge* getMSTprim(Graph* graph, int startVertex)
       l = l->next;
     }
   }
+  
+  Edge *res_tree = newEdgeArr(rec->numTreeEdges, rec->tree);
+  deleteRecords (rec);
 
- return rec->tree;
+  return res_tree;
 }
 
 Edge* getDistanceTreeDijkstra(Graph* graph, int startVertex)
