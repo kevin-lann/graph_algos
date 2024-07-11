@@ -121,9 +121,6 @@ void deleteVertex(Vertex* vertex)
 void deleteGraph(Graph* graph)
 {
   for (int i = 0; i < graph->numVertices; i++)
-  {
     deleteVertex (graph->vertices[i]);
-    free (graph->vertices);
-  }
   free (graph);
 }

@@ -23,6 +23,7 @@ typedef struct records
   bool* finished;     // finished[id] is true iff vertex id is finished
                       //   i.e. no longer in the PQ
   int* predecessors;  // predecessors[id] is the predecessor of vertex id
+  int* distances;     // distances[id] is distance(start, id) in Dijkstra's.
   Edge* tree;         // keeps edges for the resulting tree
   int numTreeEdges;   // current number of edges in mst
 } Records;
@@ -48,6 +49,7 @@ Records* initRecords(Graph* graph, int startVertex)
   records->finished = (bool *) calloc (graph->numVertices, sizeof (bool));
 
   records->predecessors = (int *) malloc (graph->numVertices * sizeof (int));
+  records->distances = (int *) malloc (graph->numVertices * sizeof (int));
   records->tree = (Edge *) malloc (graph->numVertices * sizeof (Edge));
   records->numTreeEdges = 0;
 
@@ -128,15 +130,15 @@ Edge* getMSTprim(Graph* graph, int startVertex)
 
     /* Omit adding the start node, because it doesn't have a predecessor. */
     if (u.id != startVertex)
-      addTreeEdge (rec, rec->numTreeEdges, rec->predecessors[u.id], u.id, u.priority);
+      addTreeEdge (rec, rec->numTreeEdges, u.id, rec->predecessors[u.id], u.priority);
 
-    /* Iterate through v's adjacency list. */
+    /* Iterate through u's adjacency list. */
     EdgeList* l = graph->vertices[u.id]->adjList;
     while (l != NULL)
     {
       Vertex* v = graph->vertices[l->edge->toVertex];
       /* If v in heap and w(u, v) less than priority(v) . */
-      if (rec->finished[v->id] == false && l->edge->weight < getPriority(rec->heap, v->id));
+      if (rec->finished[v->id] == false && l->edge->weight < getPriority (rec->heap, v->id))
       {
         decreasePriority(rec->heap, v->id, l->edge->weight);
         rec->predecessors[v->id] = u.id; 
@@ -150,12 +152,80 @@ Edge* getMSTprim(Graph* graph, int startVertex)
 
 Edge* getDistanceTreeDijkstra(Graph* graph, int startVertex)
 {
-  return NULL;
+  if (!isValidNode (graph, startVertex))
+    return NULL;
+
+  Records* rec = initRecords(graph, startVertex);
+  rec->distances[startVertex] = 0;
+
+  while (!isEmpty (rec->heap))
+  {
+    HeapNode u = extractMin (rec->heap);
+    rec->finished[u.id] = true;
+    
+    /* Iterate through u's adjacency list. */
+    EdgeList* l = graph->vertices[u.id]->adjList;
+    while (l != NULL)
+    {
+      Vertex* v = graph->vertices[l->edge->toVertex];
+      int new_dist = getPriority (rec->heap, u.id) + l->edge->weight;
+      /* If v in heap and dist(start, v) less than priority(v) . */
+      if (rec->finished[v->id] == false && new_dist < getPriority(rec->heap, v->id))
+      {
+        decreasePriority(rec->heap, v->id, new_dist);
+        rec->distances[v->id] = new_dist;
+        rec->predecessors[v->id] = u.id; 
+      }
+      l = l->next;
+    }
+  }
+
+  /* Build Distance Tree */
+  addTreeEdge (rec, rec->numTreeEdges, startVertex, startVertex, 0);
+  for (int id = 0; id < graph->numVertices; id++)
+    if (id != startVertex)
+      addTreeEdge (rec, rec->numTreeEdges, id, rec->predecessors[id], rec->distances[id]);
+
+  return rec->tree;
 }
 
 EdgeList** getShortestPaths(Edge* distTree, int numVertices, int startVertex)
 {
-  return NULL;
+  if (!(0 <= startVertex && startVertex < numVertices))
+    return NULL;
+  
+  EdgeList **paths = (EdgeList **) malloc (numVertices * sizeof (EdgeList *));
+  paths[startVertex] = NULL;
+
+  for (int id = 0; id < numVertices; id++)
+  {
+    if (id == startVertex)
+      continue;
+
+    Edge *edge = &distTree[id];
+    EdgeList *list, *start, *prev;
+    prev = newEdgeList (NULL, NULL);
+
+    /* Add the path to list. Path is unique and terminates at startVertex. */
+    while (edge->fromVertex != startVertex)
+    {
+      list = newEdgeList (&distTree[edge->fromVertex], NULL);
+      prev->next = list;
+      
+      /* Record start node of list. */
+      if (edge->fromVertex == id)
+        start = prev->next;
+
+      list = list->next;
+      prev = prev->next;
+
+      edge = &distTree[edge->toVertex];
+    }
+
+    paths[id] = start;
+  }
+
+  return paths;
 }
 
 /*************************************************************************
