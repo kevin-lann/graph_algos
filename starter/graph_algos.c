@@ -126,15 +126,17 @@ void addTreeEdge(Records* records, int ind, int fromVertex, int toVertex,
 EdgeList* makePath(Edge* distTree, int vertex, int startVertex)
 {
   Edge *edge = &distTree[vertex];
-  Edge* tmp;
-  EdgeList *list, *start, *prev;
+  Edge* tmpEdge;
+  EdgeList *list, *start, *prev, *tmp;
+  
+  /* Temporary first node of edge list. Will be freed after first iteration. */
   prev = newEdgeList (NULL, NULL);
 
   /* Add the path to list. Path is unique and terminates at startVertex. */
   while (edge->fromVertex != startVertex)
   {
-    tmp = newEdge (edge->fromVertex, edge->toVertex, edge->weight);
-    list = newEdgeList (tmp, NULL);
+    tmpEdge = newEdge (edge->fromVertex, edge->toVertex, edge->weight);
+    list = newEdgeList (tmpEdge, NULL);
     prev->next = list;
 
     if (prev->edge)
@@ -142,10 +144,17 @@ EdgeList* makePath(Edge* distTree, int vertex, int startVertex)
     
     /* Record start node of list. */
     if (edge->fromVertex == vertex)
+    {
       start = prev->next;
+      tmp = prev;
+    }
 
     list = list->next;
     prev = prev->next;
+
+    /* Free the first node of prev as it is null. */
+    if (edge->fromVertex == vertex)
+      free (tmp);
 
     edge = &distTree[edge->toVertex];
   }
@@ -237,7 +246,10 @@ Edge* getDistanceTreeDijkstra(Graph* graph, int startVertex)
     if (id != startVertex)
       addTreeEdge (rec, rec->numTreeEdges, id, rec->predecessors[id], rec->distances[id]);
 
-  return rec->tree;
+  Edge *res_tree = newEdgeArr(rec->numTreeEdges, rec->tree);
+  deleteRecords (rec);
+
+  return res_tree;
 }
 
 EdgeList** getShortestPaths(Edge* distTree, int numVertices, int startVertex)
