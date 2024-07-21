@@ -128,7 +128,7 @@ EdgeList* makePath(Edge* distTree, int vertex, int startVertex)
   Edge *edge = &distTree[vertex];
   Edge* tmpEdge;
   EdgeList *list, *start, *prev, *tmp;
-  
+
   /* Temporary first node of edge list. Will be freed after first iteration. */
   prev = newEdgeList (NULL, NULL);
 
@@ -241,10 +241,10 @@ Edge* getDistanceTreeDijkstra(Graph* graph, int startVertex)
   }
 
   /* Build Distance Tree */
-  addTreeEdge (rec, rec->numTreeEdges, startVertex, startVertex, 0);
+  addTreeEdge (rec, startVertex, startVertex, startVertex, 0);
   for (int id = 0; id < graph->numVertices; id++)
     if (id != startVertex)
-      addTreeEdge (rec, rec->numTreeEdges, id, rec->predecessors[id], rec->distances[id]);
+      addTreeEdge (rec, id, id, rec->predecessors[id], rec->distances[id]);
 
   Edge *res_tree = newEdgeArr(rec->numTreeEdges, rec->tree);
   deleteRecords (rec);

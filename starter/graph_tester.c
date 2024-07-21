@@ -66,8 +66,15 @@ int main(int argc, char* argv[])
 
   printGraph(graph);
 
-  runPrim(graph, 0);  // try other vertices!
-  runDijkstra(graph, 0);
+  int node = atoi(argv[2]);
+  if (graph->numVertices <= node)
+  {
+    printf ("Invalid node index. ");
+    return 1;
+  }
+
+  runPrim(graph, node);  // try other vertices!
+  runDijkstra(graph, node);
 
   deleteGraph(graph);
   return 0;
